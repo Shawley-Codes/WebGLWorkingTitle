@@ -1,6 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////
 //
 //  Solar.js
+//  Edit by Scott Hawley
 //
 /////////////////////////////////////////////////////////////////////////////
 
@@ -18,16 +19,16 @@ var gl;
 
 var Planets = {
   Sun : undefined,
-  // Mercury : undefined,
-  // Venus : undefined,
-  // Earth : undefined,
-  // Moon : undefined,
-  // Mars : undefined,
-  // Jupiter : undefined,
-  // Saturn : undefined,
-  // Uranus : undefined,
-  // Neptune : undefined,
-  // Pluto : undefined
+  Mercury : undefined,
+  Venus : undefined,
+  Earth : undefined,
+  Moon : undefined,
+  Mars : undefined,
+  Jupiter : undefined,
+  Saturn : undefined,
+  Uranus : undefined,
+  Neptune : undefined,
+  Pluto : undefined
 };
 
 // Viewing transformation parameters
@@ -36,7 +37,7 @@ var V;  // matrix storing the viewing transformation
 // Projection transformation parameters
 var P;  // matrix storing the projection transformation
 var near = 10;      // near clipping plane's distance
-var far = 120;      // far clipping plane's distance
+var far = 120000;      // far clipping plane's distance
 
 // Animation variables
 var time = 0.0;      // time, our global time constant, which is 
@@ -93,6 +94,8 @@ function init() {
 //  render() - render the scene
 //
 
+var name, planet, data;
+
 function render() {
   time += timeDelta;
 
@@ -103,7 +106,7 @@ function render() {
   // Specify the viewing transformation, and use it to initialize the 
   // matrix stack
 
-  V = translate(0.0, 0.0, -0.5*(near + far));
+  V = translate(0.0, 0.0, -0.5*(near + far/1000));
   ms.load(V);  
 
   // Create a few temporary variables to make it simpler to work with
@@ -115,11 +118,15 @@ function render() {
   // about the planets in SolarSystem.  Look at how these are
   // used; it'll simplify the work you need to do.
 
-  var name, planet, data;
+  
 
-  name = "Sun";
-  planet = Planets[name];
-  data = SolarSystem[name];
+  //var name1, planet1, data1;
+
+  //name1 = "Mercury";
+  //planet1 = Planets[name];
+  //data1 = SolarSystem[name];
+  
+
   
   // Set PointMode to true to render all the vertices as points, as
   // compared to filled triangles.  This can be useful if you think
@@ -127,22 +134,40 @@ function render() {
   // "planet" variable is set for each object, you will need to set this
   // for each planet separately.
 
-  planet.PointMode = false;
 
+  
   // Use the matrix stack to configure and render a planet.  How you rener
   // each planet will be similar, but not exactly the same.  In particular,
   // here, we're only rendering the Sun, which is the center of the Solar
   // system (and hence, has no translation to its location).
-
-  ms.push();
-  ms.scale(data.radius);
-  gl.useProgram(planet.program);
-  gl.uniformMatrix4fv(planet.uniforms.MV, false, flatten(ms.current()));
-  gl.uniformMatrix4fv(planet.uniforms.P, false, flatten(P));
-  gl.uniform4fv(planet.uniforms.color, flatten(data.color));
-  planet.render();
-  ms.pop();
-
+  for (var names in Planets){
+	  name = names;
+	  planet = Planets[name];
+	  data = SolarSystem[name];
+	  
+	  planet.PointMode = false;	
+	  ms.push();  
+	  ms.scale(data.radius);
+	  if (name != "Sun" && name != "Moon") {
+		  ms.rotate(data.year * time, data.axis);   
+		  ms.translate(data.distance, 0, 0);
+		  if (name == "Earth"){
+			ms.rotate(data.day, data.axis);
+		  }
+	  }
+	  
+	  gl.useProgram(planet.program);
+	  gl.uniformMatrix4fv(planet.uniforms.MV, false, flatten(ms.current()));
+	  gl.uniformMatrix4fv(planet.uniforms.P, false, flatten(P));
+	  gl.uniform4fv(planet.uniforms.color, flatten(data.color));
+	  planet.render();
+	  if (name != "Sun") {
+		ms.pop();
+	  }
+	  if (name == "Pluto"){
+		ms.pop();
+	  }
+  }
   //
   //  Add your code for more planets here!
   //
